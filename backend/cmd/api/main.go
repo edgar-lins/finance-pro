@@ -23,6 +23,10 @@ func main() {
 	}
 	defer db.Close()
 
+	if err := database.RunMigrations(db); err != nil {
+		log.Fatalf("Falha nas migrations: %v", err)
+	}
+
 	fmt.Println("Banco de dados ligado com sucesso!")
 
 	port := os.Getenv("PORT")
