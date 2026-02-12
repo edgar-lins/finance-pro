@@ -7,6 +7,9 @@ import (
 	"os"
 
 	"github.com/edgar-lins/finance-pro/internal/database"
+	"github.com/edgar-lins/finance-pro/internal/handlers"
+	"github.com/edgar-lins/finance-pro/internal/repository"
+	"github.com/edgar-lins/finance-pro/internal/service"
 	"github.com/joho/godotenv"
 )
 
@@ -26,6 +29,15 @@ func main() {
 	if err := database.RunMigrations(db); err != nil {
 		log.Fatalf("Falha nas migrations: %v", err)
 	}
+
+	// Instanciar as camadas (Injeção de Dependência)
+	userRepo := repository.NewUserRepository(db)
+	authService := service.NewAuthService(userRepo)
+	authHandler := handlers.NewAuthHandler(authService)
+
+	// 2. Definir as rotas
+	http.HandleFunc("/auth/register", authHandler.Register)
+	fmt.Println("✅ Rotas de autenticação prontas!")
 
 	fmt.Println("Banco de dados ligado com sucesso!")
 
