@@ -8,6 +8,7 @@ import (
 
 	"github.com/edgar-lins/finance-pro/internal/database"
 	"github.com/edgar-lins/finance-pro/internal/handlers"
+	"github.com/edgar-lins/finance-pro/internal/middleware"
 	"github.com/edgar-lins/finance-pro/internal/repository"
 	"github.com/edgar-lins/finance-pro/internal/service"
 	"github.com/joho/godotenv"
@@ -34,10 +35,13 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	authService := service.NewAuthService(userRepo)
 	authHandler := handlers.NewAuthHandler(authService)
+	accRepo := repository.NewAccountRepository(db)
+	accHandler := handlers.NewAccountHandler(accRepo)
 
 	// 2. Definir as rotas
 	http.HandleFunc("/auth/register", authHandler.Register)
-	http.HandleFunc("/auth/login", authHandler.Login) // Adicione esta linha
+	http.HandleFunc("/auth/login", authHandler.Login)
+	http.HandleFunc("/accounts", middleware.AuthMiddleware(accHandler.Create))
 	fmt.Println("✅ Rotas de autenticação prontas!")
 
 	fmt.Println("Banco de dados ligado com sucesso!")
