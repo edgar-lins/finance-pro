@@ -47,12 +47,17 @@ func main() {
 	transService := service.NewTransactionService(transRepo, accRepo) // Note que passamos o accRepo aqui
 	transHandler := handlers.NewTransactionHandler(transService)
 
+	prefRepo := repository.NewPreferencesRepository(db)
+	summaryService := service.NewSummaryService(transRepo, prefRepo, accRepo)
+	summaryHandler := handlers.NewSummaryHandler(summaryService)
+
 	// 2. Definir as rotas
 	http.HandleFunc("/auth/register", authHandler.Register)
 	http.HandleFunc("/auth/login", authHandler.Login)
 	http.HandleFunc("/accounts", middleware.AuthMiddleware(accHandler.Create))
 	http.HandleFunc("/categories", middleware.AuthMiddleware(catHandler.Create))
 	http.HandleFunc("/transactions", middleware.AuthMiddleware(transHandler.Create))
+	http.HandleFunc("/dashboard/summary", middleware.AuthMiddleware(summaryHandler.GetSummary))
 	fmt.Println("✅ Rotas de autenticação prontas!")
 
 	fmt.Println("Banco de dados ligado com sucesso!")
