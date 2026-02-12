@@ -12,15 +12,14 @@ import (
 	"github.com/edgar-lins/finance-pro/internal/repository"
 	"github.com/edgar-lins/finance-pro/internal/service"
 	"github.com/joho/godotenv"
+	"github.com/rs/cors" // Certifique-se de que este import existe
 )
 
 func main() {
-	// Carregar variáveis do .env
 	if err := godotenv.Load(); err != nil {
 		log.Println("Aviso: .env não encontrado")
 	}
 
-	// Inicializar Banco de Dados
 	db, err := database.GetConnection()
 	if err != nil {
 		log.Fatalf("Erro ao ligar ao banco: %v", err)
@@ -31,42 +30,52 @@ func main() {
 		log.Fatalf("Falha nas migrations: %v", err)
 	}
 
-	// Instanciar as camadas (Injeção de Dependência)
+	// 1. Instanciar Repositories
 	userRepo := repository.NewUserRepository(db)
-
-	authService := service.NewAuthService(userRepo)
-	authHandler := handlers.NewAuthHandler(authService)
-
 	accRepo := repository.NewAccountRepository(db)
-	accHandler := handlers.NewAccountHandler(accRepo)
-
 	catRepo := repository.NewCategoryRepository(db)
-	catHandler := handlers.NewCategoryHandler(catRepo)
-
 	transRepo := repository.NewTransactionRepository(db)
-	transService := service.NewTransactionService(transRepo, accRepo) // Note que passamos o accRepo aqui
-	transHandler := handlers.NewTransactionHandler(transService)
-
 	prefRepo := repository.NewPreferencesRepository(db)
+
+	// 2. Instanciar Services
+	authService := service.NewAuthService(userRepo)
+	transService := service.NewTransactionService(transRepo, accRepo)
 	summaryService := service.NewSummaryService(transRepo, prefRepo, accRepo)
+
+	// 3. Instanciar Handlers
+	authHandler := handlers.NewAuthHandler(authService)
+	accHandler := handlers.NewAccountHandler(accRepo)
+	catHandler := handlers.NewCategoryHandler(catRepo)
+	transHandler := handlers.NewTransactionHandler(transService)
 	summaryHandler := handlers.NewSummaryHandler(summaryService)
 
-	// 2. Definir as rotas
+	// 4. Definir Rotas no DefaultServeMux
 	http.HandleFunc("/auth/register", authHandler.Register)
 	http.HandleFunc("/auth/login", authHandler.Login)
 	http.HandleFunc("/accounts", middleware.AuthMiddleware(accHandler.Create))
 	http.HandleFunc("/categories", middleware.AuthMiddleware(catHandler.Create))
 	http.HandleFunc("/transactions", middleware.AuthMiddleware(transHandler.Create))
 	http.HandleFunc("/dashboard/summary", middleware.AuthMiddleware(summaryHandler.GetSummary))
-	fmt.Println("✅ Rotas de autenticação prontas!")
 
-	fmt.Println("Banco de dados ligado com sucesso!")
+	// 5. Configurar CORS
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
+	})
+
+	// Criamos o wrapper do CORS em volta das rotas registradas acima
+	handler := c.Handler(http.DefaultServeMux)
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
+	fmt.Println("✅ Banco de dados e Migrations OK!")
 	fmt.Printf("🚀 Servidor a correr na porta %s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+
+	// AQUI ESTAVA O ERRO: Você deve passar o 'handler' (com CORS) no lugar de 'nil'
+	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
