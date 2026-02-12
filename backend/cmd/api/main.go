@@ -37,7 +37,6 @@ func main() {
 
 	// 2. Definir as rotas
 	http.HandleFunc("/auth/register", authHandler.Register)
-	http.HandleFunc("/auth/register", authHandler.Register)
 	http.HandleFunc("/auth/login", authHandler.Login) // Adicione esta linha
 	fmt.Println("✅ Rotas de autenticação prontas!")
 
