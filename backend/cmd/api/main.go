@@ -52,7 +52,16 @@ func main() {
 	// 4. Definir Rotas no DefaultServeMux
 	http.HandleFunc("/auth/register", authHandler.Register)
 	http.HandleFunc("/auth/login", authHandler.Login)
-	http.HandleFunc("/accounts", middleware.AuthMiddleware(accHandler.Create))
+	// Rota de Contas (Suporta POST para criar e GET para listar)
+	http.HandleFunc("/accounts", middleware.AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			accHandler.Create(w, r)
+		} else if r.Method == http.MethodGet {
+			accHandler.List(w, r)
+		} else {
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+		}
+	}))
 	http.HandleFunc("/categories", middleware.AuthMiddleware(catHandler.Create))
 	http.HandleFunc("/transactions", middleware.AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
