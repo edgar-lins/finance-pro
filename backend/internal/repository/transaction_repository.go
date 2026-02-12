@@ -72,3 +72,22 @@ func (r *TransactionRepository) GetMonthlySummary(userID uuid.UUID, month, year 
 
 	return transactions, nil
 }
+
+func (r *TransactionRepository) ListByUserID(userID uuid.UUID) ([]models.Transaction, error) {
+	query := `SELECT id, description, amount, date, type, is_credit_card, installment_number, total_installments 
+	          FROM transactions WHERE user_id = $1 ORDER BY date DESC`
+
+	rows, err := r.db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []models.Transaction
+	for rows.Next() {
+		var t models.Transaction
+		rows.Scan(&t.ID, &t.Description, &t.Amount, &t.Date, &t.Type, &t.IsCreditCard, &t.InstallmentNumber, &t.TotalInstallments)
+		list = append(list, t)
+	}
+	return list, nil
+}

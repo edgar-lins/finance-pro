@@ -42,3 +42,15 @@ func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Transação(ões) criada(s) com sucesso"})
 }
+
+func (h *TransactionHandler) List(w http.ResponseWriter, r *http.Request) {
+	userIDStr := r.Context().Value("user_id").(string)
+	userID, _ := uuid.Parse(userIDStr)
+
+	list, err := h.service.List(userID) // Implemente o List no Service chamando o Repo
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(list)
+}

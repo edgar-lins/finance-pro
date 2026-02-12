@@ -54,7 +54,13 @@ func main() {
 	http.HandleFunc("/auth/login", authHandler.Login)
 	http.HandleFunc("/accounts", middleware.AuthMiddleware(accHandler.Create))
 	http.HandleFunc("/categories", middleware.AuthMiddleware(catHandler.Create))
-	http.HandleFunc("/transactions", middleware.AuthMiddleware(transHandler.Create))
+	http.HandleFunc("/transactions", middleware.AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			transHandler.Create(w, r)
+		} else {
+			transHandler.List(w, r)
+		}
+	}))
 	http.HandleFunc("/dashboard/summary", middleware.AuthMiddleware(summaryHandler.GetSummary))
 
 	// 5. Configurar CORS
@@ -65,7 +71,6 @@ func main() {
 		AllowCredentials: true,
 	})
 
-	// Criamos o wrapper do CORS em volta das rotas registradas acima
 	handler := c.Handler(http.DefaultServeMux)
 
 	port := os.Getenv("PORT")
@@ -76,6 +81,5 @@ func main() {
 	fmt.Println("✅ Banco de dados e Migrations OK!")
 	fmt.Printf("🚀 Servidor a correr na porta %s\n", port)
 
-	// AQUI ESTAVA O ERRO: Você deve passar o 'handler' (com CORS) no lugar de 'nil'
 	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
