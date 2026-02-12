@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/edgar-lins/finance-pro/internal/models"
+	"github.com/google/uuid"
 )
 
 type TransactionRepository struct {
@@ -28,4 +29,46 @@ func (r *TransactionRepository) Create(t *models.Transaction) error {
 		t.Date, t.Type, t.IsCreditCard, t.InstallmentNumber,
 		t.TotalInstallments, t.ParentTransactionID, t.Status,
 	).Scan(&t.ID)
+}
+
+func (r *TransactionRepository) GetMonthlySummary(userID uuid.UUID, month, year int) ([]models.Transaction, error) {
+	// 1. A Query agora faz JOIN com categories para trazer o RuleGroup
+	// e usamos EXTRACT para filtrar o período
+	query := `
+		SELECT 
+			t.amount, t.type, t.is_credit_card, c.rule_group 
+		FROM transactions t
+		LEFT JOIN categories c ON t.category_id = c.id
+		WHERE t.user_id = $1 
+		AND EXTRACT(MONTH FROM t.date) = $2 
+		AND EXTRACT(YEAR FROM t.date) = $3`
+
+	rows, err := r.db.Query(query, userID, month, year)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var transactions []models.Transaction
+	for rows.Next() {
+		var t models.Transaction
+		var ruleGroup sql.NullString // Usamos NullString caso a categoria tenha sido deletada
+
+		// 2. Lemos os dados. Note que estamos simplificando o model Transaction
+		// ou você pode criar um model específico para o resumo
+		err := rows.Scan(&t.Amount, &t.Type, &t.IsCreditCard, &ruleGroup)
+		if err != nil {
+			return nil, err
+		}
+
+		// Atribuímos o grupo da regra ao campo da transação (precisaremos desse campo no Model)
+		if ruleGroup.Valid {
+			// Se você adicionar um campo "RuleGroup" no seu models.Transaction
+			// t.RuleGroup = ruleGroup.String
+		}
+
+		transactions = append(transactions, t)
+	}
+
+	return transactions, nil
 }
