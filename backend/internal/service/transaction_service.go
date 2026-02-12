@@ -17,6 +17,10 @@ func NewTransactionService(r *repository.TransactionRepository, ar *repository.A
 	return &TransactionService{repo: r, accountRepo: ar}
 }
 
+func (s *TransactionService) List(userID uuid.UUID) ([]models.Transaction, error) {
+	return s.repo.ListByUserID(userID)
+}
+
 func (s *TransactionService) Create(req models.CreateTransactionRequest, userID uuid.UUID) error {
 	parsedDate, _ := time.Parse("2006-01-02", req.Date)
 	parentID := uuid.New()
