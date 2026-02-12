@@ -33,15 +33,21 @@ func main() {
 
 	// Instanciar as camadas (Injeção de Dependência)
 	userRepo := repository.NewUserRepository(db)
+
 	authService := service.NewAuthService(userRepo)
 	authHandler := handlers.NewAuthHandler(authService)
+
 	accRepo := repository.NewAccountRepository(db)
 	accHandler := handlers.NewAccountHandler(accRepo)
+
+	catRepo := repository.NewCategoryRepository(db)
+	catHandler := handlers.NewCategoryHandler(catRepo)
 
 	// 2. Definir as rotas
 	http.HandleFunc("/auth/register", authHandler.Register)
 	http.HandleFunc("/auth/login", authHandler.Login)
 	http.HandleFunc("/accounts", middleware.AuthMiddleware(accHandler.Create))
+	http.HandleFunc("/categories", middleware.AuthMiddleware(catHandler.Create))
 	fmt.Println("✅ Rotas de autenticação prontas!")
 
 	fmt.Println("Banco de dados ligado com sucesso!")
