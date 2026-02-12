@@ -51,6 +51,15 @@ func RunMigrations(db *sql.DB) error {
 		parent_transaction_id UUID,
 		status TEXT DEFAULT 'confirmed',
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+	);
+	
+	CREATE TABLE IF NOT EXISTS user_preferences (
+		id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+		user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+		limit_50 DECIMAL(5,2) DEFAULT 50.00,
+		limit_30 DECIMAL(5,2) DEFAULT 30.00,
+		limit_20 DECIMAL(5,2) DEFAULT 20.00,
+		updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 	);`
 
 	_, err := db.Exec(query)
