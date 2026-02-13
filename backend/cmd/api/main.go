@@ -62,7 +62,18 @@ func main() {
 			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
 		}
 	}))
-	http.HandleFunc("/categories", middleware.AuthMiddleware(catHandler.Create))
+
+	// No seu main.go, procure a linha de categorias e ajuste:
+	http.HandleFunc("/categories", middleware.AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			catHandler.Create(w, r)
+		} else if r.Method == http.MethodGet {
+			catHandler.List(w, r)
+		} else {
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+		}
+	}))
+
 	http.HandleFunc("/transactions", middleware.AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			transHandler.Create(w, r)
@@ -70,6 +81,7 @@ func main() {
 			transHandler.List(w, r)
 		}
 	}))
+
 	http.HandleFunc("/dashboard/summary", middleware.AuthMiddleware(summaryHandler.GetSummary))
 
 	// 5. Configurar CORS

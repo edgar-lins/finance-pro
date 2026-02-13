@@ -1,7 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard'; // Importando a página real
+import Dashboard from './pages/Dashboard';
+import Accounts from './pages/Accounts'; 
+import Transactions from './pages/Transactions'; 
+import Categories from './pages/Categories';
 
 function App() {
   return (
@@ -11,13 +14,15 @@ function App() {
         
         {/* Rotas que usam o Layout */}
         <Route element={<Layout />}>
-          {/* Agora usamos o componente real no lugar do placeholder */}
           <Route path="/dashboard" element={<Dashboard />} />
           
-          {/* Aqui adicionaremos as outras rotas depois */}
-          {/* <Route path="/accounts" element={<Accounts />} /> */}
+          {/* 2. Remova os comentários destas linhas abaixo: */}
+          <Route path="/accounts" element={<Accounts />} />
+          <Route path="/transactions" element={<Transactions />} />
+          <Route path="/categories" element={<Categories />} />
         </Route>
 
+        {/* Se a rota não existir, ele manda para o login */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>

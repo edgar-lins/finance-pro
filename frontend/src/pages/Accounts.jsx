@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Plus, Wallet, CreditCard, Banknote, MoreVertical } from 'lucide-react';
+import { Plus, CreditCard, Banknote, MoreVertical } from 'lucide-react';
+import AccountModal from '../components/AccountModal';
 import api from '../services/api';
 
 export default function Accounts() {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchAccounts = async () => {
     try {
@@ -29,6 +31,7 @@ export default function Accounts() {
           <p className="text-slate-500 text-sm">Gerencie seus bancos, carteiras e cartões</p>
         </div>
         <button 
+          onClick={() => setIsModalOpen(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-blue-200"
         >
           <Plus size={20} />
@@ -38,7 +41,7 @@ export default function Accounts() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading ? (
-          <p>Carregando contas...</p>
+          <p className="text-slate-500">Carregando contas...</p>
         ) : accounts.length === 0 ? (
           <div className="col-span-full text-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-200">
             <p className="text-slate-400">Nenhuma conta cadastrada ainda.</p>
@@ -75,6 +78,13 @@ export default function Accounts() {
           ))
         )}
       </div>
+
+      {/* Modal de Criação */}
+      <AccountModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={fetchAccounts} 
+      />
     </div>
   );
 }
